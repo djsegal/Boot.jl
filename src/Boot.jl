@@ -6,9 +6,11 @@ module Boot
   using Compat
 
   include("flatten_array.jl")
-  include("delete_method.jl")
 
+  include("delete_method.jl")
+  include("delete_docstring.jl")
   include("purge_corrupted_data.jl")
+
   include("strip_output_color.jl")
 
   include("get_all_files.jl")
