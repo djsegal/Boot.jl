@@ -1,5 +1,21 @@
 module Boot
 
-# package code goes here
+  using Revise
+  using Compat
 
-end # module
+  include("flatten_array.jl")
+  include("delete_method.jl")
+
+  include("get_all_files.jl")
+  include("get_all_symbols.jl")
+  include("get_package_methods.jl")
+
+  include("include_folder.jl")
+
+  export get_all_files
+  export get_all_symbols
+  export get_package_methods
+
+  export include_folder
+
+end
