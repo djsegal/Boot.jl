@@ -13,16 +13,16 @@ It can be used to simplify the following code:
 ```julia
 module Foo
 
-  include("math/int.jl")
-  include("math/float.jl")
+  include("int.jl")
+  include("float.jl")
 
-  include("math/ops/plus.jl")
-  include("math/ops/minus.jl")
-  include("math/ops/times.jl")
-  include("math/ops/divide.jl")
+  include("ops/plus.jl")
+  include("ops/minus.jl")
+  include("ops/times.jl")
+  include("ops/divide.jl")
 
-  include("math/calc/int.jl")
-  include("math/calc/diff.jl")
+  include("ops/calc/int.jl")
+  include("ops/calc/diff.jl")
 
 end
 ```
