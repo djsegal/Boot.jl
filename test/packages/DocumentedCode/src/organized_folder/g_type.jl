@@ -1,0 +1,3 @@
+struct GType
+
+end
