@@ -34,11 +34,11 @@ module Foo
 
   using Boot
 
-  include_folder(cur_folder::AbstractString) =
-    Boot.include_folder(Foo, cur_folder)
+  include_folder(varargs...; kwargs...) =
+    Boot.include_folder(Foo, varargs...; kwargs...)
 
   cd("$(dirname(@__FILE__))") do
-    include_folder("math")
+    include_folder(except_for=[@__FILE__])
   end
 
 end

@@ -1,6 +1,15 @@
-function include_folder(cur_package::Module, cur_folder::AbstractString; is_sorted::Bool=true)
+function include_folder(cur_package::Module, cur_folder::AbstractString="."; is_sorted::Bool=true, except_for::AbstractArray=[])
 
   all_files = get_all_files(cur_folder, is_sorted=is_sorted)
+
+  all_files = map(abspath, all_files)
+
+  except_for = map(abspath, except_for)
+
+  filter!(
+    cur_file -> !in(cur_file, except_for),
+    all_files
+  )
 
   unloaded_files = copy(all_files)
 

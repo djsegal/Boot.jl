@@ -2,11 +2,11 @@ module CyclicPackage
 
   using Boot
 
-  include_folder(cur_folder::AbstractString) =
-    Boot.include_folder(CyclicPackage, cur_folder)
+  include_folder(varargs...; kwargs...) =
+    Boot.include_folder(CyclicPackage, varargs...; kwargs...)
 
   cd("$(dirname(@__FILE__))") do
-    include_folder("bad_folder")
+    include_folder(except_for=[@__FILE__])
   end
 
 end

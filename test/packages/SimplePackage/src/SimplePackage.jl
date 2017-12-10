@@ -2,11 +2,11 @@ module SimplePackage
 
   using Boot
 
-  include_folder(cur_folder::AbstractString) =
-    Boot.include_folder(SimplePackage, cur_folder)
+  include_folder(varargs...; kwargs...) =
+    Boot.include_folder(SimplePackage, varargs...; kwargs...)
 
   cd("$(dirname(@__FILE__))") do
-    include_folder("a_folder")
+    include_folder(except_for=[@__FILE__])
   end
 
 end
