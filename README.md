@@ -21,8 +21,8 @@ module Foo
   include("math/ops/times.jl")
   include("math/ops/divide.jl")
 
-  include("math/calc/int")
-  include("math/calc/diff")
+  include("math/calc/int.jl")
+  include("math/calc/diff.jl")
 
 end
 ```
