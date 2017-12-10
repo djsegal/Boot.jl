@@ -10,7 +10,7 @@ Boot.jl is for loading subdirectories in packages.
 
 It can be used to simplify the following code:
 
-``` julia
+```julia
 module Foo
 
   include("math/int.jl")
@@ -29,7 +29,35 @@ end
 
 to the easier to maintain:
 
-``` julia
+```julia
+module Foo
+
+  using Boot
+
+  include_folder(Boot, @__FILE__)
+
+end
+```
+
+// note that this is robust against file interdependencies (i.e. if `a.jl` depends on `c.jl` and `c.jl` depends on `b.jl`)
+
+## Tips
+
+To avoid passing your package to Boot every time, you can modify this code:
+
+```julia
+module Foo
+
+  using Boot
+
+  include_folder(Boot, @__FILE__)
+
+end
+```
+
+to (the seemingly more obfuscated [but much more useful])
+
+```julia
 module Foo
 
   using Boot
@@ -41,5 +69,3 @@ module Foo
 
 end
 ```
-
-// note that this is robust against file interdependencies (i.e. if `a.jl` depends on `c.jl` and `c.jl` depends on `b.jl`)
