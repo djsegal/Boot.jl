@@ -1,5 +1,12 @@
 function include_folder(cur_package::Module, cur_folder::AbstractString="."; is_sorted::Bool=true, except_for::AbstractArray=[])
 
+  if isempty(except_for) && endswith(cur_folder,".jl")
+    cur_file = cur_folder
+
+    cur_folder = dirname(cur_file)
+    except_for = [cur_file]
+  end
+
   all_files = get_all_files(cur_folder, is_sorted=is_sorted)
 
   all_files = map(abspath, all_files)

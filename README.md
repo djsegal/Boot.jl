@@ -37,13 +37,9 @@ module Foo
   include_folder(varargs...; kwargs...) =
     Boot.include_folder(Foo, varargs...; kwargs...)
 
-  cd("$(dirname(@__FILE__))") do
-    include_folder(except_for=[@__FILE__])
-  end
+  include_folder(@__FILE__)
 
 end
 ```
-
------
 
 // note that this is robust against file interdependencies (i.e. if `a.jl` depends on `c.jl` and `c.jl` depends on `b.jl`)
