@@ -34,7 +34,7 @@ module Foo
 
   using Boot
 
-  include_folder(Boot, @__FILE__)
+  include_folder(Foo, @__FILE__)
 
 end
 ```
@@ -50,7 +50,7 @@ module Foo
 
   using Boot
 
-  include_folder(Boot, @__FILE__)
+  include_folder(Foo, @__FILE__)
 
 end
 ```
