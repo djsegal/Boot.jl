@@ -40,38 +40,9 @@ function include_folder(cur_package::Module, cur_folder::AbstractString="."; is_
 
         cur_methods_list = get_package_methods(cur_package)
 
-        new_methods = setdiff(cur_methods_list, init_methods_list)
+        corrupted_methods = setdiff(cur_methods_list, init_methods_list)
 
-        for new_method in new_methods
-          delete_method(new_method)
-        end
-
-        Docs.initmeta(cur_package)
-
-        for new_method in new_methods
-
-          new_method_name = new_method.name
-
-          b = Docs.Binding(cur_package, new_method_name)
-          m = get!(Docs.meta(cur_package), b, Docs.MultiDoc())
-
-          cur_sig_string = string(new_method.sig)
-
-          cur_sig_string = replace(cur_sig_string, "$(cur_package).#$(new_method_name)", "")
-
-          cur_sig_string = replace(cur_sig_string, "{,", "{")
-
-          cur_sig = cur_package.eval(parse(string(cur_sig_string)))
-
-          cur_keys = collect(keys(m.docs))
-
-          for cur_key in cur_keys
-            ( cur_sig <: cur_key ) || continue
-
-            delete!(m.docs, cur_key)
-          end
-
-        end
+        purge_corrupted_data!(cur_package, corrupted_methods)
 
         continue
 
@@ -87,6 +58,7 @@ function include_folder(cur_package::Module, cur_folder::AbstractString="."; is_
 
     if new_file_count == 0
       bad_file = unloaded_files[1]
+
       println(bad_file)
       include(bad_file)
     end

@@ -8,6 +8,7 @@ module Boot
   include("flatten_array.jl")
   include("delete_method.jl")
 
+  include("purge_corrupted_data.jl")
   include("strip_output_color.jl")
 
   include("get_all_files.jl")
