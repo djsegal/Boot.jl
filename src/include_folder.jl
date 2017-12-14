@@ -1,11 +1,15 @@
 function include_folder(cur_package::Module, cur_folder::AbstractString="."; is_sorted::Bool=true, except_for::AbstractArray=[])
 
+  # allow loading folder by index file
+
   if isempty(except_for) && endswith(cur_folder,".jl")
     cur_file = cur_folder
 
     cur_folder = dirname(cur_file)
     except_for = [cur_file]
   end
+
+  # get list of all files to be loaded
 
   all_files = get_all_files(cur_folder, is_sorted=is_sorted)
 
@@ -18,51 +22,54 @@ function include_folder(cur_package::Module, cur_folder::AbstractString="."; is_
     all_files
   )
 
-  unloaded_files = copy(all_files)
+  # build file expressions
 
-  loaded_files = []
+  file_dicts = Array{Dict{AbstractString, Any}}(0)
 
-  while length(unloaded_files) > 0
+  for cur_file in all_files
+    cur_dict = Dict(
+      "name" => cur_file,
+      "unloaded_shards" => parse_file(cur_file),
+      "loaded_shards" => Array{Expr}(0),
+      "undef" => nothing
+    )
 
-    new_file_count = 0
+    push!(file_dicts, cur_dict)
+  end
 
-    for file in copy(unloaded_files)
+  # load all files
 
-      init_methods_list = get_package_methods(cur_package)
+  has_loaded_file = true
 
-      try
+  while has_loaded_file
 
-        include(file)
+    has_loaded_file = false
 
-        Revise.track(cur_package, file)
+    for cur_dict in file_dicts
+      isempty(cur_dict["unloaded_shards"]) && continue
 
-      catch
+      has_undef_var = (
+        ( cur_dict["undef"] != nothing ) &&
+        !isdefined(cur_package, cur_dict["undef"])
+      )
 
-        cur_methods_list = get_package_methods(cur_package)
+      has_undef_var && continue
 
-        corrupted_methods = setdiff(cur_methods_list, init_methods_list)
-
-        purge_corrupted_data!(cur_package, corrupted_methods)
-
-        continue
-
-      end
-
-      push!(loaded_files, file)
-
-      new_file_count += 1
-
+      has_loaded_file = (
+        attempt_file_load(cur_package, cur_dict) || has_loaded_file
+      )
     end
 
-    unloaded_files = setdiff(all_files, loaded_files)
+  end
 
-    if new_file_count == 0
-      bad_file = unloaded_files[1]
+  # make sure all files were loaded
 
-      println(bad_file)
-      include(bad_file)
-    end
+  for cur_dict in file_dicts
+    isempty(cur_dict["unloaded_shards"]) && continue
+    bad_shard = first(cur_dict["unloaded_shards"])
 
+    # raise error through loading bad shard
+    cur_package.eval(bad_shard)
   end
 
 end

@@ -1,9 +1,12 @@
 # cyclic package
 
-out_data = @capture_out begin
+test_error = nothing
 
-  @test_throws LoadError include("../packages/CyclicPackage/src/CyclicPackage.jl")
-
+try
+  include("../packages/CyclicPackage/src/CyclicPackage.jl")
+catch cur_error
+  test_error = cur_error
 end
 
-@test contains(String(out_data), "bad_folder/thing_1.jl")
+@test isa(test_error.error, UndefVarError)
+@test test_error.error.var == :Thing2

@@ -16,13 +16,17 @@ module Boot
   include("get_all_files.jl")
   include("get_all_symbols.jl")
   include("get_package_methods.jl")
+  include("attempt_file_load.jl")
+  include("clean_shard.jl")
 
   include("include_folder.jl")
+  include("parse_file.jl")
 
   export get_all_files
   export get_all_symbols
   export get_package_methods
 
   export include_folder
+  export parse_file
 
 end
