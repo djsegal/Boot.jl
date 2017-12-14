@@ -59,7 +59,7 @@ function clean_shard(cur_shard::Expr)
 
   if cur_shard.head == :copyast
     for (cur_index, cur_sub_shard) in enumerate(cur_shard.args)
-      cur_shard.args[cur_index] = QuoteNode(clean_shard(eval(cur_sub_shard)))
+      cur_shard.args[cur_index] = QuoteNode(clean_shard(cur_package.eval(cur_sub_shard)))
     end
 
     return cur_shard
