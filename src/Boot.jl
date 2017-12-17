@@ -5,6 +5,8 @@ module Boot
   using Revise
   using Compat
 
+  include("shard_list_constants.jl")
+
   include("strip_output_color.jl")
   include("attempt_file_load.jl")
   include("clean_shard.jl")
