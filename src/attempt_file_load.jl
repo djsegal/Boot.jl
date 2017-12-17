@@ -27,9 +27,9 @@ function attempt_file_load(cur_package::Module, cur_dict::Dict)
     end
 
     if macroexpand(cur_shard).head == :error
-      cur_shard = clean_shard(cur_shard)
+      cur_shard = clean_shard(cur_package, cur_shard)
     else
-      cur_shard = clean_shard(macroexpand(cur_shard))
+      cur_shard = clean_shard(cur_package, macroexpand(cur_shard))
     end
 
     ( cur_shard == nothing ) && ( cur_shard = :() )

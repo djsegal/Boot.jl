@@ -4,16 +4,16 @@ const cur_update_operators = [
     :($=), :(>>>=), :(>>=), :(<<=)
   ]
 
-function clean_shard(cur_shard::shard_type_union)
+function clean_shard(cur_package::Module, cur_shard::shard_type_union)
   return cur_shard
 end
 
-function clean_shard(cur_shard::Expr)
+function clean_shard(cur_package::Module, cur_shard::Expr)
   if cur_shard.head == :block || cur_shard.head == :for ||
       cur_shard.head == :if || cur_shard.head == :->
     for (cur_index, cur_sub_shard) in enumerate(cur_shard.args)
       ( cur_sub_shard == nothing ) && continue
-      cur_shard.args[cur_index] = clean_shard(cur_sub_shard)
+      cur_shard.args[cur_index] = clean_shard(cur_package, cur_sub_shard)
     end
 
     return cur_shard
@@ -27,7 +27,7 @@ function clean_shard(cur_shard::Expr)
 
     for (cur_index, cur_sub_shard) in enumerate(cur_shard.args)
       ( cur_sub_shard == nothing ) && continue
-      cur_shard.args[cur_index] = clean_shard(cur_sub_shard)
+      cur_shard.args[cur_index] = clean_shard(cur_package, cur_sub_shard)
     end
 
     return cur_shard
@@ -53,7 +53,7 @@ function clean_shard(cur_shard::Expr)
 
   if cur_shard.head == :copyast
     for (cur_index, cur_sub_shard) in enumerate(cur_shard.args)
-      cur_shard.args[cur_index] = QuoteNode(clean_shard(cur_package.eval(cur_sub_shard)))
+      cur_shard.args[cur_index] = QuoteNode(clean_shard(cur_package, cur_package.eval(cur_sub_shard)))
     end
 
     return cur_shard
