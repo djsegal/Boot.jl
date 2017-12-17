@@ -45,7 +45,7 @@ function include_folder(cur_package::Module, cur_folder::AbstractString="."; is_
 
     has_loaded_file = false
 
-    for cur_dict in file_dicts
+    for cur_dict in shuffle(file_dicts)
       isempty(cur_dict["unloaded_shards"]) && continue
 
       has_undef_var = (
