@@ -9,22 +9,15 @@ function clean_shard(cur_package::Module, cur_shard::shard_type_union)
 end
 
 function clean_shard(cur_package::Module, cur_shard::Expr)
-  if cur_shard.head == :block || cur_shard.head == :for ||
-      cur_shard.head == :if || cur_shard.head == :->
-    for (cur_index, cur_sub_shard) in enumerate(cur_shard.args)
-      ( cur_sub_shard == nothing ) && continue
-      cur_shard.args[cur_index] = clean_shard(cur_package, cur_sub_shard)
-    end
-
-    return cur_shard
-  end
-
   if cur_shard.head == :call
 
     first_sub_shard = first(cur_shard.args)
 
     ( first_sub_shard == Base.Docs.doc! ) && ( return nothing )
 
+  end
+
+  if any(x -> x == cur_shard.head, cur_nested_shards)
     for (cur_index, cur_sub_shard) in enumerate(cur_shard.args)
       ( cur_sub_shard == nothing ) && continue
       cur_shard.args[cur_index] = clean_shard(cur_package, cur_sub_shard)

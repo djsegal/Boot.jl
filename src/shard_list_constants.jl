@@ -5,6 +5,13 @@ const shard_type_union = Union{
   VersionNumber
 }
 
+const cur_nested_shards = [
+  :->,
+  :macrocall, :for,
+  :block, :if,
+  :call
+]
+
 const cur_return_self_shards = [
   :toplevel, :inbounds, :import,
   :return, :macro, :tuple, :where,
