@@ -1,14 +1,9 @@
-const cur_update_operators = [
-    :(+=), :(-=), :(*=), :(/=), :(\=),
-    :(÷=), :(%=), :(^=), :(&=), :(|=),
-    :($=), :(>>>=), :(>>=), :(<<=)
-  ]
-
 function clean_shard(cur_package::Module, cur_shard::shard_type_union)
   return cur_shard
 end
 
 function clean_shard(cur_package::Module, cur_shard::Expr)
+
   if cur_shard.head == :call
 
     first_sub_shard = first(cur_shard.args)
@@ -24,7 +19,10 @@ function clean_shard(cur_package::Module, cur_shard::Expr)
     end
 
     return cur_shard
+  end
 
+  if any(x -> x == cur_shard.head, cur_update_operators)
+    return cur_shard
   end
 
   if cur_shard.head == :(=)
@@ -49,10 +47,6 @@ function clean_shard(cur_package::Module, cur_shard::Expr)
       cur_shard.args[cur_index] = QuoteNode(clean_shard(cur_package, cur_package.eval(cur_sub_shard)))
     end
 
-    return cur_shard
-  end
-
-  if any(x -> x == cur_shard.head, cur_update_operators)
     return cur_shard
   end
 

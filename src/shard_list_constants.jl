@@ -5,6 +5,12 @@ const shard_type_union = Union{
   VersionNumber
 }
 
+const cur_update_operators = [
+  :(+=), :(-=), :(*=), :(/=), :(\=),
+  :(÷=), :(%=), :(^=), :(&=), :(|=),
+  :($=), :(>>>=), :(>>=), :(<<=)
+]
+
 const cur_nested_shards = [
   :->,
   :macrocall, :for,
