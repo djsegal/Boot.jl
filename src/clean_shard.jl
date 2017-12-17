@@ -63,16 +63,9 @@ function clean_shard(cur_shard::Expr)
     return cur_shard
   end
 
-  ( cur_shard.head == :toplevel ) && ( return cur_shard )
-  ( cur_shard.head == :macro ) && ( return cur_shard )
-  ( cur_shard.head == :tuple ) && ( return cur_shard )
-  ( cur_shard.head == :curly ) && ( return cur_shard )
-  ( cur_shard.head == :ref ) && ( return cur_shard )
-  ( cur_shard.head == :try ) && ( return cur_shard )
-
-  ( cur_shard.head == :(::) ) && ( return cur_shard )
-  ( cur_shard.head == :(:) ) && ( return cur_shard )
-  ( cur_shard.head == :(.) ) && ( return cur_shard )
+  if any(x -> x == cur_shard.head, cur_return_self_shards)
+    return cur_shard
+  end
 
   if any(x -> x == cur_shard.head, cur_return_nothing_shards)
     return nothing
