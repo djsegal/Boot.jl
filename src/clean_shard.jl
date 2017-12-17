@@ -74,12 +74,9 @@ function clean_shard(cur_shard::Expr)
   ( cur_shard.head == :(:) ) && ( return cur_shard )
   ( cur_shard.head == :(.) ) && ( return cur_shard )
 
-  ( cur_shard.head == :type ) && ( return nothing )
-  ( cur_shard.head == :function ) && ( return nothing )
-  ( cur_shard.head == :const ) && ( return nothing )
-  ( cur_shard.head == :abstract ) && ( return nothing )
-  ( cur_shard.head == :export ) && ( return nothing )
-  ( cur_shard.head == :line ) && ( return nothing )
+  if any(x -> x == cur_shard.head, cur_return_nothing_shards)
+    return nothing
+  end
 
   error("Unable to determine what to do with node of type: $(string(cur_shard.head))")
 
