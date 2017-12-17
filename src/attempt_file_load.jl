@@ -21,9 +21,10 @@ function attempt_file_load(cur_package::Module, cur_dict::Dict)
 
     cur_dict["undef"] = nothing
 
-    push!(loaded_indices, cur_index)
-
-    isa(cur_eval, Module) && continue
+    if isa(cur_eval, Module)
+      push!(loaded_indices, cur_index)
+      continue
+    end
 
     if macroexpand(cur_shard).head == :error
       cur_shard = clean_shard(cur_shard)
@@ -32,6 +33,8 @@ function attempt_file_load(cur_package::Module, cur_dict::Dict)
     end
 
     ( cur_shard == nothing ) && ( cur_shard = :() )
+
+    push!(loaded_indices, cur_index)
 
     push!(cur_dict["loaded_shards"], cur_shard)
 
