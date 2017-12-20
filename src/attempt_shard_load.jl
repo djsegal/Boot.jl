@@ -1,3 +1,8 @@
+const allowed_errors = [
+  UndefVarError,
+  ArgumentError
+]
+
 function attempt_shard_load!(cur_package::Module, cur_dict::Dict, cur_shard::Expr)
 
   cur_error = nothing
@@ -13,10 +18,13 @@ function attempt_shard_load!(cur_package::Module, cur_dict::Dict, cur_shard::Exp
   ( cur_error == nothing ) &&
     ( return cur_error, cur_time )
 
-  isa(cur_error, UndefVarError) ||
-    load_invalid_file(cur_package, cur_dict)
+  is_valid_file = any(
+    a_error -> isa(cur_error, a_error),
+    allowed_errors
+  )
 
   cur_dict["time"] = cur_time
+  is_valid_file || load_invalid_file(cur_package, cur_dict)
 
   cur_dict["undef"] = cur_error.var
 
