@@ -9,44 +9,28 @@ function include_folder(cur_package::Module, cur_folder::AbstractString="."; is_
     except_for = [cur_file]
   end
 
-  # get list of all files to be loaded
+  # make initial load
 
-  all_files = get_all_files(cur_folder, is_sorted=is_sorted)
+  all_files = get_all_files(cur_folder, except_for=except_for, is_sorted=is_sorted)
 
-  all_files = map(abspath, all_files)
-
-  except_for = map(abspath, except_for)
-
-  filter!(
-    cur_file -> !in(cur_file, except_for),
-    all_files
-  )
-
-  # build file expressions
-
-  file_dicts = Array{Dict{AbstractString, Any}}(0)
-
-  for cur_file in all_files
-    cur_dict = Dict(
-      "name" => cur_file,
-      "unloaded_shards" => parse_file(cur_file),
-      "loaded_shards" => Array{Expr}(0),
-      "undef" => nothing
-    )
-
-    push!(file_dicts, cur_dict)
-  end
+  file_dicts = make_initial_load(cur_package, all_files)
 
   # load all files
 
-  has_loaded_file = true
+  loaded_files_count = 1
 
-  while has_loaded_file
+  while !iszero(loaded_files_count)
 
-    has_loaded_file = false
+    loaded_files_count = 0
 
-    for cur_dict in shuffle(file_dicts)
-      isempty(cur_dict["unloaded_shards"]) && continue
+    sort!(
+      file_dicts,
+      by = ( cur_dict -> cur_dict["time"] )
+    )
+
+    delete_indices = Array{Integer}(0)
+
+    for (cur_index, cur_dict) in enumerate(file_dicts)
 
       has_undef_var = (
         ( cur_dict["undef"] != nothing ) &&
@@ -55,21 +39,28 @@ function include_folder(cur_package::Module, cur_folder::AbstractString="."; is_
 
       has_undef_var && continue
 
-      has_loaded_file = (
-        attempt_file_load(cur_package, cur_dict) || has_loaded_file
-      )
+      attempt_file_load!(cur_package, cur_dict) &&
+        ( loaded_files_count += 1 )
+
+      isempty(cur_dict["unloaded_shards"]) &&
+        push!(delete_indices, cur_index)
+
+      ( loaded_files_count >= 3 ) && break
+
     end
+
+    deleteat!(file_dicts, delete_indices)
 
   end
 
-  # make sure all files were loaded
+  # raise errors for undefined variables
 
-  for cur_dict in file_dicts
-    isempty(cur_dict["unloaded_shards"]) && continue
-    bad_shard = first(cur_dict["unloaded_shards"])
+  if !isempty(file_dicts)
 
-    # raise error through loading bad shard
-    cur_package.eval(bad_shard)
+    first_bad_file = first(file_dicts)
+
+    load_invalid_file(cur_package, first_bad_file)
+
   end
 
 end

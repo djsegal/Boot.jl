@@ -1,8 +1,22 @@
-function clean_shard(cur_package::Module, cur_shard::shard_type_union)
+function clean_shard(cur_package::Module, cur_shard::Expr)
+  expanded_shard = macroexpand(cur_shard)
+
+  if expanded_shard.head != :error
+    cur_shard = _clean_shard(cur_package, expanded_shard)
+  else
+    cur_shard = _clean_shard(cur_package, cur_shard)
+  end
+
+  ( cur_shard == nothing ) && ( cur_shard = :() )
+
+  cur_shard
+end
+
+function _clean_shard(cur_package::Module, cur_shard::shard_type_union)
   return cur_shard
 end
 
-function clean_shard(cur_package::Module, cur_shard::Expr)
+function _clean_shard(cur_package::Module, cur_shard::Expr)
 
   if cur_shard.head == :call
 
@@ -15,7 +29,7 @@ function clean_shard(cur_package::Module, cur_shard::Expr)
   if any(x -> x == cur_shard.head, cur_nested_shards)
     for (cur_index, cur_sub_shard) in enumerate(cur_shard.args)
       ( cur_sub_shard == nothing ) && continue
-      cur_shard.args[cur_index] = clean_shard(cur_package, cur_sub_shard)
+      cur_shard.args[cur_index] = _clean_shard(cur_package, cur_sub_shard)
     end
 
     return cur_shard
@@ -34,17 +48,18 @@ function clean_shard(cur_package::Module, cur_shard::Expr)
 
     ( var_type == :ref ) && ( return cur_shard )
     ( var_type == :tuple ) && ( return cur_shard )
+    ( var_type == :curly ) && ( return cur_shard )
 
     ( var_type == :where ) && ( return nothing )
     ( var_type == :call ) && ( return nothing )
 
-    error("Unable to determine what to do with :(=) shard: $cur_shard")
+    error("Unable to determine what to do with :(=) shard: $cur_shard (of type $var_type)")
 
   end
 
   if cur_shard.head == :copyast
     for (cur_index, cur_sub_shard) in enumerate(cur_shard.args)
-      cur_shard.args[cur_index] = QuoteNode(clean_shard(cur_package, cur_package.eval(cur_sub_shard)))
+      cur_shard.args[cur_index] = QuoteNode(_clean_shard(cur_package, cur_package.eval(cur_sub_shard)))
     end
 
     return cur_shard

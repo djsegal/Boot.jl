@@ -8,5 +8,11 @@ catch cur_error
   test_error = cur_error
 end
 
-@test isa(test_error.error, UndefVarError)
-@test test_error.error.var == :Thing2
+@test isa(test_error, LoadError)
+test_error = test_error.error
+
+@test isa(test_error, LoadError)
+test_error = test_error.error
+
+@test isa(test_error, UndefVarError)
+@test test_error.var == :Thing1
