@@ -5,6 +5,13 @@ const allowed_errors = [
 
 function attempt_shard_load!(cur_package::Module, cur_dict::Dict, cur_shard::Expr)
 
+  is_include_call = (
+    cur_shard.head == :call &&
+    first(cur_shard.args) == :include
+  )
+
+  is_include_call && return
+
   cur_error = nothing
 
   cur_time = @elapsed(

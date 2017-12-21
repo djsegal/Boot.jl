@@ -1,4 +1,11 @@
 function clean_shard(cur_package::Module, cur_shard::Expr)
+   is_include_call = (
+    cur_shard.head == :call &&
+    first(cur_shard.args) == :include
+  )
+
+  is_include_call && return :()
+
   expanded_shard = macroexpand(cur_shard)
 
   if expanded_shard.head != :error
@@ -7,7 +14,7 @@ function clean_shard(cur_package::Module, cur_shard::Expr)
     cur_shard = _clean_shard(cur_package, cur_shard)
   end
 
-  ( cur_shard == nothing ) && ( cur_shard = :() )
+  ( cur_shard == nothing ) && return :()
 
   cur_shard
 end
