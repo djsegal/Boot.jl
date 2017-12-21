@@ -23,7 +23,7 @@ function include_folder(cur_package::Module, cur_folder::AbstractString="."; is_
 
     loaded_files_count = 0
 
-    sort!(
+    is_sorted || sort!(
       file_dicts,
       by = ( cur_dict -> cur_dict["time"] )
     )
