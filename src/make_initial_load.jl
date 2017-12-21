@@ -17,11 +17,11 @@ function make_initial_load(cur_package::Module, all_files::AbstractArray)
 
     for (cur_index, cur_shard) in enumerate(cur_shards)
 
-      cur_error = attempt_shard_load!(
+      did_load = attempt_shard_load!(
         cur_package, cur_dict, cur_shard
       )
 
-      if cur_error != nothing
+      if !did_load
         bad_index = cur_index
         break
       end

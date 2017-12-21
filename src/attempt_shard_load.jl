@@ -10,7 +10,7 @@ function attempt_shard_load!(cur_package::Module, cur_dict::Dict, cur_shard::Exp
     first(cur_shard.args) == :include
   )
 
-  is_include_call && return
+  is_include_call && return true
 
   cur_error = nothing
 
@@ -27,7 +27,7 @@ function attempt_shard_load!(cur_package::Module, cur_dict::Dict, cur_shard::Exp
     end
   )
 
-  ( cur_error == nothing ) && return
+  ( cur_error == nothing ) && return true
 
   is_valid_file = any(
     a_error -> isa(cur_error, a_error),
@@ -51,7 +51,7 @@ function attempt_shard_load!(cur_package::Module, cur_dict::Dict, cur_shard::Exp
   isa(cur_error, UndefVarError) &&
     ( cur_dict["undef"] = cur_error.var )
 
-  return cur_error
+  return false
 
 end
 

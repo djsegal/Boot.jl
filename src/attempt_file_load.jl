@@ -9,11 +9,11 @@ function attempt_file_load!(cur_package::Module, cur_dict::Dict)
 
   for (cur_index, cur_shard) in enumerate(cur_dict["unloaded_shards"])
 
-    cur_error = attempt_shard_load!(
+    did_load = attempt_shard_load!(
       cur_package, cur_dict, cur_shard
     )
 
-    ( cur_error == nothing ) || break
+    did_load || break
 
     push!(loaded_indices, cur_index)
 
