@@ -5,6 +5,7 @@ module Boot
   using Revise
   using Compat
 
+  include("purge_corrupted_methods.jl")
   include("strip_output_color.jl")
 
   include("make_initial_load.jl")
