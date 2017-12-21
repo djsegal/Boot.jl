@@ -2,7 +2,6 @@ __precompile__()
 
 module Boot
 
-  using Revise
   using Compat
 
   include("purge_corrupted_methods.jl")
