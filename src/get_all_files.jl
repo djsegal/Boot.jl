@@ -1,4 +1,4 @@
-function get_all_files(cur_folder::AbstractString; is_sorted::Bool=true, except_for::AbstractArray{T}=[]) where T <: AbstractString
+function get_all_files(cur_folder::AbstractString; is_sorted::Bool=true, except_for::AbstractArray=[])
   nested_files = _get_nested_files(cur_folder)
 
   is_sorted ? sort!(nested_files) : shuffle!(nested_files)
@@ -29,7 +29,7 @@ function _get_nested_files(cur_item::AbstractString)
   return nested_files
 end
 
-function _remove_unwanted_files(nested_files::AbstractArray{S1}, except_for::AbstractArray{S2}) where {S1<:AbstractString, S2<:AbstractString}
+function _remove_unwanted_files(nested_files::AbstractArray, except_for::AbstractArray)
   nested_files = map(abspath, nested_files)
 
   except_for = map(abspath, except_for)
