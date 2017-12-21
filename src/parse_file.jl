@@ -7,6 +7,9 @@ function parse_file(cur_file::AbstractString)
   cur_expression = parse(opened_file)
 
   while cur_expression != nothing
+    isa(cur_expression, Number) &&
+      ( cur_expression = :( cur_expression + 0 ) )
+
     push!(file_shards, cur_expression)
     cur_expression = parse(opened_file)
   end
