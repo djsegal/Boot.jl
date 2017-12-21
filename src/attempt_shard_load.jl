@@ -22,8 +22,7 @@ function attempt_shard_load!(cur_package::Module, cur_dict::Dict, cur_shard::Exp
     end
   )
 
-  ( cur_error == nothing ) &&
-    ( return cur_error, cur_time )
+  ( cur_error == nothing ) && return
 
   is_valid_file = any(
     a_error -> isa(cur_error, a_error),
@@ -35,6 +34,6 @@ function attempt_shard_load!(cur_package::Module, cur_dict::Dict, cur_shard::Exp
 
   cur_dict["undef"] = cur_error.var
 
-  return cur_error, cur_time
+  return cur_error
 
 end

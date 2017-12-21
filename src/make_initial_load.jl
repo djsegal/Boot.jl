@@ -8,6 +8,7 @@ function make_initial_load(cur_package::Module, all_files::AbstractArray)
 
     cur_dict = Dict(
       "name" => cur_file,
+      "time" => 0.0,
       "undef" => nothing
     )
 
@@ -15,7 +16,7 @@ function make_initial_load(cur_package::Module, all_files::AbstractArray)
 
     for (cur_index, cur_shard) in enumerate(cur_shards)
 
-      cur_error, cur_time = attempt_shard_load!(
+      cur_error = attempt_shard_load!(
         cur_package, cur_dict, cur_shard
       )
 
