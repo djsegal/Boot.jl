@@ -29,10 +29,18 @@ function attempt_shard_load!(cur_package::Module, cur_dict::Dict, cur_shard::Exp
     allowed_errors
   )
 
-  cur_dict["time"] = cur_time
   is_valid_file || load_invalid_file(cur_package, cur_dict)
 
-  cur_dict["undef"] = cur_error.var
+
+  cur_dict["time"] = cur_time
+
+  cur_dict["undef"] = nothing
+
+  isa(cur_error, ArgumentError) &&
+    ( cur_dict["time"] *= 10 )
+
+  isa(cur_error, UndefVarError) &&
+    ( cur_dict["undef"] = cur_error.var )
 
   return cur_error
 
