@@ -1,8 +1,12 @@
-function make_initial_load(cur_package::Module, all_files::AbstractArray)
+function make_initial_load(cur_package::Module, all_files::AbstractArray; verbose::Bool=false)
 
   file_dicts = Array{Dict{AbstractString, Any}}(0)
 
+  verbose && println("\ninitial load:\n")
+
   for cur_file in all_files
+
+    verbose && print(cur_file * " ")
 
     cur_shards = parse_file(cur_file)
 
@@ -29,6 +33,8 @@ function make_initial_load(cur_package::Module, all_files::AbstractArray)
       push!(cur_dict["loaded_shards"], cur_shard)
 
     end
+
+    verbose && println( iszero(bad_index) ? "✓" : "X" )
 
     iszero(bad_index) && continue
 
