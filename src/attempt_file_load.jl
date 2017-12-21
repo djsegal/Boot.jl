@@ -1,6 +1,7 @@
 function attempt_file_load!(cur_package::Module, cur_dict::Dict)
 
   for cur_shard in cur_dict["loaded_shards"]
+    isempty(cur_shard.args) && continue
     cur_package.eval(cur_shard)
   end
 
