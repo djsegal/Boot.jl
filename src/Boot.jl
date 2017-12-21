@@ -7,6 +7,7 @@ module Boot
   include("purge_corrupted_methods.jl")
   include("strip_output_color.jl")
 
+  include("do_main_load_loop.jl")
   include("make_initial_load.jl")
   include("attempt_file_load.jl")
   include("load_invalid_file.jl")
