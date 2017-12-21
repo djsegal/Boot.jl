@@ -8,8 +8,9 @@ function make_initial_load(cur_package::Module, all_files::AbstractArray)
 
     cur_dict = Dict(
       "name" => cur_file,
+      "undef" => nothing,
       "time" => 0.0,
-      "undef" => nothing
+      "loaded_shards" => Array{Expr}(0)
     )
 
     bad_index = 0
@@ -20,18 +21,18 @@ function make_initial_load(cur_package::Module, all_files::AbstractArray)
         cur_package, cur_dict, cur_shard
       )
 
-      ( cur_error == nothing ) && continue
+      if cur_error != nothing
+        bad_index = cur_index
+        break
+      end
 
-      bad_index = cur_index
-
-      break
+      push!(cur_dict["loaded_shards"], cur_shard)
 
     end
 
     iszero(bad_index) && continue
 
     cur_dict["unloaded_shards"] = cur_shards[bad_index:end]
-    cur_dict["loaded_shards"] = cur_shards[1:bad_index-1]
 
     for (cur_index, cur_shard) in enumerate(cur_dict["loaded_shards"])
 
