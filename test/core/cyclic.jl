@@ -15,4 +15,4 @@ test_error = test_error.error
 test_error = test_error.error
 
 @test isa(test_error, UndefVarError)
-@test test_error.var == :Thing1
+@test test_error.var == :Thing2
