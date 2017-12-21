@@ -3,9 +3,10 @@ const allowed_errors = [
   ArgumentError
 ]
 
-function attempt_shard_load!(cur_package::Module, cur_dict::Dict, cur_shard::Expr)
+function attempt_shard_load!(cur_package::Module, cur_dict::Dict, cur_shard::Expr, is_test::Bool=false)
 
   is_include_call = (
+    !is_test &&
     cur_shard.head == :call &&
     first(cur_shard.args) == :include
   )

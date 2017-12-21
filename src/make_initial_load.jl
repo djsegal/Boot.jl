@@ -1,4 +1,4 @@
-function make_initial_load(cur_package::Module, all_files::AbstractArray; verbose::Bool=false)
+function make_initial_load(cur_package::Module, all_files::AbstractArray; verbose::Bool=false, is_test::Bool=false)
 
   file_dicts = Array{Dict{AbstractString, Any}}(0)
 
@@ -22,7 +22,7 @@ function make_initial_load(cur_package::Module, all_files::AbstractArray; verbos
     for (cur_index, cur_shard) in enumerate(cur_shards)
 
       did_load = attempt_shard_load!(
-        cur_package, cur_dict, cur_shard
+        cur_package, cur_dict, cur_shard, is_test
       )
 
       if !did_load
