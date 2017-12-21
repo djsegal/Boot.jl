@@ -13,6 +13,10 @@ function attempt_shard_load!(cur_package::Module, cur_dict::Dict, cur_shard::Exp
 
   is_include_call && return true
 
+  if cur_shard.head == :module
+    _check_module_node!(cur_package, cur_dict, cur_shard) || return false
+  end
+
   cur_error = nothing
 
   cur_func_name = _get_function_name(cur_shard)
@@ -56,7 +60,7 @@ function attempt_shard_load!(cur_package::Module, cur_dict::Dict, cur_shard::Exp
 
 end
 
-function _get_function_name(cur_shard)
+function _get_function_name(cur_shard::Expr)
   cur_func_name = nothing
 
   if cur_shard.head == :function
@@ -78,4 +82,34 @@ function _get_function_name(cur_shard)
   end
 
   cur_func_name
+end
+
+function _check_module_node!(cur_package::Module, cur_dict::Dict, cur_shard::Expr)
+  cur_import_exprs = filter(
+    cur_arg -> isdefined(cur_arg, :head) && cur_arg.head == :toplevel,
+    cur_shard.args[3].args
+  )
+
+  for cur_expr in cur_import_exprs
+    for cur_sub_expr in cur_expr.args
+      ( cur_sub_expr.head == :import ) || continue
+
+      ( length(cur_sub_expr.args) == 2 ) ||
+        error("Unexpected import expression format in shard load.")
+
+      work_package, work_method = cur_sub_expr.args
+
+      ( work_package == Symbol(cur_package) ) || continue
+
+      if !isdefined(cur_package, work_method)
+        cur_dict["time"] = 100.0 # set to 100 seconds
+
+        cur_dict["undef"] = work_method
+
+        return false
+      end
+    end
+  end
+
+  return true
 end

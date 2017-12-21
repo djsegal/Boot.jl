@@ -27,6 +27,7 @@ const cur_return_self_shards = [
 ]
 
 const cur_return_nothing_shards = [
-  :function, :abstract, :export, :using, :macro,
-  :const, :type, :stagedfunction, :immutable
+  :function, :abstract, :export, :using,
+  :const, :type, :stagedfunction,
+  :immutable, :module, :macro
 ]
