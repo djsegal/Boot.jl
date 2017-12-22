@@ -21,5 +21,6 @@ function include_folder(cur_package::Module, cur_folder::AbstractString="."; is_
 
   isempty(file_dicts) || start_load_failure!(cur_package, file_dicts, verbose=verbose)
 
+  verbose && println("\ndone.")
 
 end
