@@ -6,7 +6,7 @@ function clean_shard(cur_package::Module, cur_shard::Expr)
 
   is_include_call && return :()
 
-  expanded_shard = macroexpand(cur_shard)
+  expanded_shard = cur_package.macroexpand(cur_shard)
 
   if expanded_shard.head != :error
     cur_shard = _clean_shard(cur_package, expanded_shard)
