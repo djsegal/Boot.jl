@@ -80,18 +80,8 @@ function _check_for_bad_types(cur_package::Module, cur_shard::Expr)
 end
 
 function _check_type_field(cur_package::Module, cur_shard::Expr)
-  if cur_shard.head == :(.)
-    cur_error = nothing
-    try
-      cur_package.eval(cur_shard)
-    catch tmp_error
-      cur_error = tmp_error
-    end
-    ( cur_error == nothing ) && return
-
-    isa(cur_error, UndefVarError) || rethrow(cur_error)
-    return cur_error.var
-  end
+  ( cur_shard.head == :(.) ) &&
+    return _check_dot_field(cur_package::Module, cur_shard)
 
   for cur_sub_shard in cur_shard.args
     undef_type = _check_type_field(cur_package, cur_sub_shard)
@@ -99,6 +89,19 @@ function _check_type_field(cur_package::Module, cur_shard::Expr)
   end
 
   return
+end
+
+function _check_dot_field(cur_package::Module, cur_shard::Expr)
+  cur_error = nothing
+  try
+    cur_package.eval(cur_shard)
+  catch tmp_error
+    cur_error = tmp_error
+  end
+  ( cur_error == nothing ) && return
+
+  isa(cur_error, UndefVarError) || rethrow(cur_error)
+  return cur_error.var
 end
 
 function _check_type_field(cur_package::Module, cur_shard::Symbol)
