@@ -24,7 +24,7 @@ function attempt_shard_load!(cur_package::Module, cur_dict::Dict, cur_shard::Exp
   methods_list = ( cur_func_name != nothing && isdefined(cur_package, cur_func_name) ) ?
     methods(getfield(cur_package, cur_func_name)) : []
 
-  cur_symbol_count = length(get_all_symbols(cur_package))
+  cur_symbol_count = get_method_count(cur_package)
 
   cur_time = @elapsed(
     try
@@ -37,7 +37,8 @@ function attempt_shard_load!(cur_package::Module, cur_dict::Dict, cur_shard::Exp
   if cur_error == nothing
     ( cur_shard.head == :macrocall ) || return true
 
-    cur_symbol_count -= length(get_all_symbols(cur_package))
+    cur_symbol_count -= get_method_count(cur_package)
+
     cur_symbol_count *= -1
 
     iszero(cur_symbol_count) && return true
