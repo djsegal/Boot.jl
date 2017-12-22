@@ -63,6 +63,10 @@ end
 function _get_function_name(cur_shard::Expr)
   cur_func_name = nothing
 
+  if cur_shard.head == :macrocall && string(cur_shard.args[1]) == "Core.@doc"
+    cur_shard = cur_shard.args[3]
+  end
+
   if cur_shard.head == :function
 
     cur_func_name = cur_shard.args[1].args[1]
