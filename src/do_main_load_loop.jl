@@ -2,6 +2,8 @@ function do_main_load_loop!(cur_package::Module, file_dicts::AbstractArray; is_s
 
   verbose && println("\nmain load loop:\n")
 
+  skip_undef = true
+
   loaded_files_count = 1
 
   while !iszero(loaded_files_count)
@@ -20,6 +22,7 @@ function do_main_load_loop!(cur_package::Module, file_dicts::AbstractArray; is_s
     for (cur_index, cur_dict) in enumerate(file_dicts)
 
       has_undef_var = (
+        skip_undef &&
         ( cur_dict["undef"] != nothing ) &&
         !isdefined(cur_package, cur_dict["undef"])
       )
@@ -42,6 +45,18 @@ function do_main_load_loop!(cur_package::Module, file_dicts::AbstractArray; is_s
     end
 
     deleteat!(file_dicts, delete_indices)
+
+    iszero(length(file_dicts)) && break
+
+    if skip_undef
+      iszero(loaded_files_count) || continue
+    else
+      iszero(loaded_files_count) && continue
+    end
+
+    skip_undef && ( loaded_files_count = 1 )
+
+    skip_undef = !skip_undef
 
   end
 
