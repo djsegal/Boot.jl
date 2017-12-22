@@ -6,6 +6,8 @@ function do_main_load_loop!(cur_package::Module, file_dicts::AbstractArray; is_s
 
   while !iszero(loaded_files_count)
 
+    verbose && println("-----")
+
     loaded_files_count = 0
 
     is_sorted || sort!(
