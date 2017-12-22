@@ -14,7 +14,7 @@ function attempt_shard_load!(cur_package::Module, cur_dict::Dict, cur_shard::Exp
   is_include_call && return true
 
   if cur_shard.head == :module
-    _check_module_node!(cur_package, cur_dict, cur_shard) || return false
+    check_module_node!(cur_package, cur_dict, cur_shard) || return false
   end
 
   cur_error = nothing
@@ -101,45 +101,4 @@ function _get_function_name(cur_shard::Expr)
   end
 
   cur_func_name
-end
-
-function _check_module_node!(cur_package::Module, cur_dict::Dict, cur_shard::Expr)
-  import_list = filter(
-    cur_arg -> isdefined(cur_arg, :head) && cur_arg.head == :import,
-    cur_shard.args[3].args
-  )
-
-  cur_import_exprs = filter(
-    cur_arg -> isdefined(cur_arg, :head) && cur_arg.head == :toplevel,
-    cur_shard.args[3].args
-  )
-
-  for cur_expr in cur_import_exprs
-    for cur_sub_expr in cur_expr.args
-      ( cur_sub_expr.head == :import ) &&
-        push!(import_list, cur_sub_expr)
-    end
-  end
-
-  for cur_import in import_list
-    ( cur_import.args[1] == Symbol(cur_package) ) || continue
-
-    work_module = cur_package
-
-    for cur_sub_sub_expr in cur_import.args[2:end-1]
-      work_module = getfield(work_module, cur_sub_sub_expr)
-    end
-
-    work_method = cur_import.args[end]
-
-    if !isdefined(work_module, work_method)
-      cur_dict["time"] = 100.0 # set to 100 seconds
-
-      cur_dict["undef"] = work_method
-
-      return false
-    end
-  end
-
-  return true
 end
