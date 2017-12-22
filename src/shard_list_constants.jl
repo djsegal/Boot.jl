@@ -20,7 +20,7 @@ const cur_nested_shards = [
 
 const cur_return_self_shards = [
   :toplevel, :inbounds, :import,
-  :return, :tuple, :where,
+  :return, :tuple, :where, Symbol("'"),
   :curly, :meta, :ref, :try, :line, :string,
   :(&&), :(||), :(<:),
   :(::), :(:), :(.), :(...)
