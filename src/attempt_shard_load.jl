@@ -89,6 +89,11 @@ function _get_function_name(cur_shard::Expr)
 end
 
 function _check_module_node!(cur_package::Module, cur_dict::Dict, cur_shard::Expr)
+  import_list = filter(
+    cur_arg -> isdefined(cur_arg, :head) && cur_arg.head == :import,
+    cur_shard.args[3].args
+  )
+
   cur_import_exprs = filter(
     cur_arg -> isdefined(cur_arg, :head) && cur_arg.head == :toplevel,
     cur_shard.args[3].args
@@ -96,22 +101,28 @@ function _check_module_node!(cur_package::Module, cur_dict::Dict, cur_shard::Exp
 
   for cur_expr in cur_import_exprs
     for cur_sub_expr in cur_expr.args
-      ( cur_sub_expr.head == :import ) || continue
+      ( cur_sub_expr.head == :import ) &&
+        push!(import_list, cur_sub_expr)
+    end
+  end
 
-      ( length(cur_sub_expr.args) == 2 ) ||
-        error("Unexpected import expression format in shard load.")
+  for cur_import in import_list
+    ( cur_import.args[1] == Symbol(cur_package) ) || continue
 
-      work_package, work_method = cur_sub_expr.args
+    work_module = cur_package
 
-      ( work_package == Symbol(cur_package) ) || continue
+    for cur_sub_sub_expr in cur_import.args[2:end-1]
+      work_module = getfield(work_module, cur_sub_sub_expr)
+    end
 
-      if !isdefined(cur_package, work_method)
-        cur_dict["time"] = 100.0 # set to 100 seconds
+    work_method = cur_import.args[end]
 
-        cur_dict["undef"] = work_method
+    if !isdefined(work_module, work_method)
+      cur_dict["time"] = 100.0 # set to 100 seconds
 
-        return false
-      end
+      cur_dict["undef"] = work_method
+
+      return false
     end
   end
 
