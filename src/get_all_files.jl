@@ -34,8 +34,19 @@ function _remove_unwanted_files(nested_files::AbstractArray, except_for::Abstrac
 
   except_for = map(abspath, except_for)
 
+  except_files = filter(cur_except -> endswith(cur_except, ".jl"), except_for)
+
+  except_folders = filter(cur_except -> endswith(cur_except, "/*"), except_for)
+
+  except_folders = map(cur_except -> cur_except[1:end-2], except_folders)
+
   filter!(
-    cur_file -> !in(cur_file, except_for),
+    cur_file -> !in(cur_file, except_files),
+    nested_files
+  )
+
+  filter!(
+    cur_file -> !any(cur_except -> startswith(cur_file, cur_except), except_folders),
     nested_files
   )
 
