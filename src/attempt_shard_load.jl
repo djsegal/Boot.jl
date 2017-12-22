@@ -24,6 +24,8 @@ function attempt_shard_load!(cur_package::Module, cur_dict::Dict, cur_shard::Exp
   methods_list = ( cur_func_name != nothing && isdefined(cur_package, cur_func_name) ) ?
     methods(getfield(cur_package, cur_func_name)) : []
 
+  cur_symbol_count = length(get_all_symbols(cur_package))
+
   cur_time = @elapsed(
     try
       cur_package.eval(cur_shard)
@@ -32,7 +34,19 @@ function attempt_shard_load!(cur_package::Module, cur_dict::Dict, cur_shard::Exp
     end
   )
 
-  ( cur_error == nothing ) && return true
+  if cur_error == nothing
+    ( cur_shard.head == :macrocall ) || return true
+
+    cur_symbol_count -= length(get_all_symbols(cur_package))
+    cur_symbol_count *= -1
+
+    iszero(cur_symbol_count) && return true
+
+    setfield!(cur_shard, :head, :tuple)
+    empty!(cur_shard.args)
+
+    return true
+  end
 
   is_valid_file = any(
     a_error -> isa(cur_error, a_error),

@@ -19,10 +19,14 @@ module Boot
   include("clean_shard.jl")
 
   include("include_folder.jl")
+
+  include("get_all_symbols.jl")
   include("get_all_files.jl")
   include("parse_file.jl")
 
   export include_folder
+
+  export get_all_symbols
   export get_all_files
   export parse_file
 
