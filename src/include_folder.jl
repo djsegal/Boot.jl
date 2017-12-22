@@ -19,12 +19,7 @@ function include_folder(cur_package::Module, cur_folder::AbstractString="."; is_
 
   # raise errors for undefined variables
 
-  if !isempty(file_dicts)
+  isempty(file_dicts) || start_load_failure!(cur_package, file_dicts, verbose=verbose)
 
-    first_bad_file = first(file_dicts)
-
-    load_invalid_file(cur_package, first_bad_file)
-
-  end
 
 end

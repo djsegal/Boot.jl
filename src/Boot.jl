@@ -10,6 +10,8 @@ module Boot
   include("do_main_load_loop.jl")
   include("make_initial_load.jl")
   include("attempt_file_load.jl")
+
+  include("start_load_failure.jl")
   include("load_invalid_file.jl")
 
   include("shard_list_constants.jl")
