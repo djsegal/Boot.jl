@@ -18,7 +18,7 @@ end
 
 function _check_for_bad_imports(cur_package::Module, cur_shard::Expr)
   import_list = filter(
-    cur_arg -> isdefined(cur_arg, :head) && cur_arg.head == :import,
+    cur_arg -> isdefined(cur_arg, :head) && ( cur_arg.head == :import || cur_arg.head == :using ),
     cur_shard.args[3].args
   )
 
@@ -29,7 +29,7 @@ function _check_for_bad_imports(cur_package::Module, cur_shard::Expr)
 
   for cur_expr in cur_import_exprs
     for cur_sub_expr in cur_expr.args
-      ( cur_sub_expr.head == :import ) &&
+      ( cur_sub_expr.head == :import || cur_sub_expr.head == :using ) &&
         push!(import_list, cur_sub_expr)
     end
   end
