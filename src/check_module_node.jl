@@ -61,6 +61,7 @@ function _check_for_bad_types(cur_package::Module, cur_shard::Expr)
 
   for cur_type in type_list
     for cur_field in cur_type.args[3].args
+      ( cur_field.head == :function ) && continue
       ( cur_field.head == :line ) && continue
       ( cur_field.head == :(=) ) && continue
 
