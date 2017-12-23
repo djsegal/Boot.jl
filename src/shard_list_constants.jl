@@ -22,7 +22,7 @@ const cur_return_self_shards = [
   :toplevel, :inbounds, :import,
   :return, :tuple, :where, Symbol("'"),
   :curly, :meta, :ref, :try, :line, :string,
-  :(&&), :(||), :(<:),
+  :(&&), :(||), :(<:), :bitstype, :typealias,
   :(::), :(:), :(.), :(...)
 ]
 
