@@ -53,6 +53,7 @@ function _clean_shard(cur_package::Module, cur_shard::Expr)
     isa(first_sub_shard, Symbol) && ( return cur_shard )
     var_type = first_sub_shard.head
 
+    ( var_type == :(.) ) && ( return cur_shard )
     ( var_type == :ref ) && ( return cur_shard )
     ( var_type == :tuple ) && ( return cur_shard )
     ( var_type == :curly ) && ( return cur_shard )
