@@ -1,6 +1,6 @@
 function make_initial_load(cur_package::Module, all_files::AbstractArray; verbose::Bool=false, is_test::Bool=false)
 
-  file_dicts = Array{Dict{AbstractString, Any}}(0)
+  file_infos = Array{FileInfo}(0)
 
   verbose && println("\ninitial load:\n")
 
@@ -10,19 +10,14 @@ function make_initial_load(cur_package::Module, all_files::AbstractArray; verbos
 
     cur_shards = parse_file(cur_file)
 
-    cur_dict = Dict(
-      "name" => cur_file,
-      "undef" => nothing,
-      "time" => 0.0,
-      "loaded_shards" => Array{Expr}(0)
-    )
+    cur_info = FileInfo(cur_file, file_infos)
 
     bad_index = 0
 
     for (cur_index, cur_shard) in enumerate(cur_shards)
 
       did_load = attempt_shard_load!(
-        cur_package, cur_dict, cur_shard, is_test
+        cur_package, cur_info, cur_shard, is_test
       )
 
       if !did_load
@@ -30,7 +25,7 @@ function make_initial_load(cur_package::Module, all_files::AbstractArray; verbos
         break
       end
 
-      push!(cur_dict["loaded_shards"], cur_shard)
+      push!(cur_info.loaded_shards, cur_shard)
 
     end
 
@@ -38,19 +33,19 @@ function make_initial_load(cur_package::Module, all_files::AbstractArray; verbos
 
     iszero(bad_index) && continue
 
-    cur_dict["unloaded_shards"] = cur_shards[bad_index:end]
+    cur_info.unloaded_shards = cur_shards[bad_index:end]
 
-    for (cur_index, cur_shard) in enumerate(cur_dict["loaded_shards"])
+    for (cur_index, cur_shard) in enumerate(cur_info.loaded_shards)
 
-      cur_dict["loaded_shards"][cur_index] =
+      cur_info.loaded_shards[cur_index] =
         clean_shard(cur_package, cur_shard)
 
     end
 
-    push!(file_dicts, cur_dict)
+    push!(file_infos, cur_info)
 
   end
 
-  file_dicts
+  file_infos
 
 end

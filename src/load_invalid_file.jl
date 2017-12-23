@@ -1,8 +1,8 @@
-function load_invalid_file(cur_package::Module, invalid_file::Dict)
+function load_invalid_file(cur_package::Module, invalid_file::FileInfo)
 
   # read in file
 
-  cur_file = invalid_file["name"]
+  cur_file = invalid_file.name
 
   opened_file = open(cur_file)
 
@@ -12,7 +12,7 @@ function load_invalid_file(cur_package::Module, invalid_file::Dict)
 
   # find shard in file
 
-  for cur_shard in invalid_file["loaded_shards"]
+  for cur_shard in invalid_file.loaded_shards
     parse(opened_file)
   end
 

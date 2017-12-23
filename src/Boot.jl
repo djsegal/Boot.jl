@@ -4,6 +4,8 @@ module Boot
 
   using Compat
 
+  include("file_info_type.jl")
+
   include("check_module_node.jl")
   include("purge_corrupted_methods.jl")
   include("strip_output_color.jl")

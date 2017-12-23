@@ -1,4 +1,4 @@
-function check_module_node!(cur_package::Module, cur_dict::Dict, cur_shard::Expr)
+function check_module_node!(cur_package::Module, cur_info::FileInfo, cur_shard::Expr)
 
   cur_undef = _check_for_bad_imports(cur_package::Module, cur_shard::Expr)
 
@@ -8,9 +8,9 @@ function check_module_node!(cur_package::Module, cur_dict::Dict, cur_shard::Expr
 
   ( cur_undef == nothing ) && return true
 
-  cur_dict["time"] = 100.0 # set to a long time
+  cur_info.time = 100.0 # set to a long time
 
-  cur_dict["undef"] = cur_undef
+  cur_info.undef = cur_undef
 
   return false
 

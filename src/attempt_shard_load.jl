@@ -3,7 +3,7 @@ const allowed_errors = [
   ArgumentError
 ]
 
-function attempt_shard_load!(cur_package::Module, cur_dict::Dict, cur_shard::Expr, is_test::Bool=false)
+function attempt_shard_load!(cur_package::Module, cur_info::FileInfo, cur_shard::Expr, is_test::Bool=false)
 
   is_include_call = (
     !is_test &&
@@ -14,7 +14,7 @@ function attempt_shard_load!(cur_package::Module, cur_dict::Dict, cur_shard::Exp
   is_include_call && return true
 
   if cur_shard.head == :module
-    check_module_node!(cur_package, cur_dict, cur_shard) || return false
+    check_module_node!(cur_package, cur_info, cur_shard) || return false
   end
 
   cur_error = nothing
@@ -56,16 +56,16 @@ function attempt_shard_load!(cur_package::Module, cur_dict::Dict, cur_shard::Exp
     allowed_errors
   )
 
-  is_valid_file || load_invalid_file(cur_package, cur_dict)
+  is_valid_file || load_invalid_file(cur_package, cur_info)
 
   methods_list = ( cur_func_name != nothing && isdefined(cur_package, cur_func_name) ) ?
     setdiff( methods(getfield(cur_package, cur_func_name)), methods_list) : []
 
   isempty(methods_list) || purge_corrupted_methods!(cur_package, methods_list)
 
-  cur_dict["time"] = cur_time
+  cur_info.time = cur_time
 
-  cur_dict["undef"] = nothing
+  cur_info.undef = nothing
 
   isa(cur_error, ArgumentError) &&
     ( cur_dict["time"] *= 10 )
