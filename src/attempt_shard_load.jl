@@ -47,6 +47,10 @@ function attempt_shard_load!(cur_package::Module, cur_dict::Dict, cur_shard::Exp
     return true
   end
 
+  while isa(cur_error, LoadError)
+    cur_error = cur_error.error
+  end
+
   is_valid_file = any(
     a_error -> isa(cur_error, a_error),
     allowed_errors
