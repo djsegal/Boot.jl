@@ -1,6 +1,6 @@
 function make_initial_load(cur_package::Module, all_files::AbstractArray; verbose::Bool=false, is_test::Bool=false)
 
-  file_infos = Array{FileInfo}(0)
+  cur_cabinet = FileCabinet()
 
   verbose && println("\ninitial load:\n")
 
@@ -10,7 +10,7 @@ function make_initial_load(cur_package::Module, all_files::AbstractArray; verbos
 
     cur_shards = parse_file(cur_file)
 
-    cur_info = FileInfo(cur_file, file_infos)
+    cur_info = FileInfo(cur_file, cur_cabinet)
 
     bad_index = 0
 
@@ -42,10 +42,10 @@ function make_initial_load(cur_package::Module, all_files::AbstractArray; verbos
 
     end
 
-    push!(file_infos, cur_info)
+    push!(cur_cabinet.file_infos, cur_info)
 
   end
 
-  file_infos
+  cur_cabinet
 
 end

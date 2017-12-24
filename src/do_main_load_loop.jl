@@ -1,4 +1,4 @@
-function do_main_load_loop!(cur_package::Module, file_infos::AbstractArray; is_sorted::Bool=false, verbose::Bool=false)
+function do_main_load_loop!(cur_package::Module, cur_cabinet::FileCabinet; is_sorted::Bool=false, verbose::Bool=false)
 
   verbose && println("\nmain load loop:\n")
 
@@ -13,13 +13,13 @@ function do_main_load_loop!(cur_package::Module, file_infos::AbstractArray; is_s
     loaded_files_count = 0
 
     is_sorted || sort!(
-      file_infos,
+      cur_cabinet.file_infos,
       by = ( cur_info -> cur_info.time )
     )
 
     delete_indices = Array{Integer}(0)
 
-    for (cur_index, cur_info) in enumerate(file_infos)
+    for (cur_index, cur_info) in enumerate(cur_cabinet.file_infos)
 
       has_undef_var = (
         skip_undef &&
@@ -44,9 +44,9 @@ function do_main_load_loop!(cur_package::Module, file_infos::AbstractArray; is_s
 
     end
 
-    deleteat!(file_infos, delete_indices)
+    deleteat!(cur_cabinet.file_infos, delete_indices)
 
-    iszero(length(file_infos)) && break
+    iszero(length(cur_cabinet.file_infos)) && break
 
     if skip_undef
       iszero(loaded_files_count) || continue

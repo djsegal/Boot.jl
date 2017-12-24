@@ -13,13 +13,14 @@ function include_folder(cur_package::Module, cur_folder::AbstractString="."; is_
 
   all_files = get_all_files(cur_folder, except_for=except_for, is_sorted=is_sorted)
 
-  file_dicts = make_initial_load(cur_package, all_files, verbose=verbose, is_test=is_test)
+  cur_cabinet = make_initial_load(cur_package, all_files, verbose=verbose, is_test=is_test)
 
-  is_test || do_main_load_loop!(cur_package, file_dicts, is_sorted=is_sorted, verbose=verbose)
+  is_test || do_main_load_loop!(cur_package, cur_cabinet, is_sorted=is_sorted, verbose=verbose)
 
   # raise errors for undefined variables
 
-  isempty(file_dicts) || start_load_failure!(cur_package, file_dicts, verbose=verbose)
+  isempty(cur_cabinet.file_infos) ||
+    start_load_failure!(cur_package, cur_cabinet, verbose=verbose)
 
   verbose && println("\ndone.")
 

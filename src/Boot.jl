@@ -4,7 +4,7 @@ module Boot
 
   using Compat
 
-  include("file_info_type.jl")
+  include("file_util_types.jl")
 
   include("check_module_node.jl")
   include("purge_corrupted_methods.jl")
