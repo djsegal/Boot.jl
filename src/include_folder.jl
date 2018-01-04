@@ -1,4 +1,6 @@
-function include_folder(cur_package::Module, cur_folder::AbstractString="."; is_sorted::Bool=true, except_for::AbstractArray=[], verbose::Bool=false, is_test::Bool=false)
+function include_folder(cur_package::Module, cur_folder::AbstractString="."; is_sorted::Bool=false, except_for::AbstractArray=[], verbose::Bool=false, is_test::Bool=false)
+
+  Docs.initmeta(cur_package)
 
   # allow loading folder by index file
 
@@ -11,7 +13,7 @@ function include_folder(cur_package::Module, cur_folder::AbstractString="."; is_
 
   # load all files
 
-  all_files = get_all_files(cur_folder, except_for=except_for, is_sorted=is_sorted)
+  all_files = get_all_files(cur_folder, except_for=except_for, is_sorted=true)
 
   cur_cabinet = make_initial_load(cur_package, all_files, verbose=verbose, is_test=is_test)
 
@@ -22,6 +24,15 @@ function include_folder(cur_package::Module, cur_folder::AbstractString="."; is_
   isempty(cur_cabinet.file_infos) ||
     start_load_failure!(cur_package, cur_cabinet, verbose=verbose)
 
-  verbose && println("\ndone.")
+  # print verbose messages
+
+  if verbose
+    print_load_info(cur_cabinet)
+    println("\ndone.\n")
+  end
+
+  # return the file cabinet
+
+  cur_cabinet
 
 end

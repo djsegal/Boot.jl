@@ -4,6 +4,9 @@ abstract type AbstractFileInfo end
 
 mutable struct FileCabinet{ V <: Vector{<:AbstractFileInfo} }
   file_infos::V
+  boot_module::Module
+  export_list::Vector{Symbol}
+  load_order::Vector{AbstractString}
 end
 
 mutable struct FileInfo <: AbstractFileInfo
@@ -17,9 +20,16 @@ end
 
 # constructor functions
 
-FileCabinet() = FileCabinet(
-  FileInfo[]
-)
+function FileCabinet(cur_package::Module)
+  cur_cabinet = FileCabinet(
+    FileInfo[],
+    cur_package.eval(parse("module BootDummy_$( camelize(string(Base.Random.uuid4())) ) end")),
+    Symbol[],
+    AbstractString[]
+  )
+
+  cur_cabinet
+end
 
 FileInfo{U <: AbstractFileInfo}(name::AbstractString, parent::FileCabinet{Vector{U}}) =
   FileInfo(

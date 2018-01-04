@@ -34,7 +34,7 @@ function _get_nested_files(cur_item::AbstractString)
   for sub_item in readdir(cur_item)
     startswith(sub_item, ".") && continue
 
-    sub_nested_files = _get_nested_files("$cur_item/$sub_item")
+    sub_nested_files = _get_nested_files(joinpath(cur_item, sub_item))
 
     append!(nested_files, sub_nested_files)
   end

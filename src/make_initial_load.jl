@@ -1,6 +1,6 @@
 function make_initial_load(cur_package::Module, all_files::AbstractArray; verbose::Bool=false, is_test::Bool=false)
 
-  cur_cabinet = FileCabinet()
+  cur_cabinet = FileCabinet(cur_package)
 
   verbose && println("\ninitial load:\n")
 
@@ -31,7 +31,10 @@ function make_initial_load(cur_package::Module, all_files::AbstractArray; verbos
 
     verbose && println( iszero(bad_index) ? "✓" : "X" )
 
-    iszero(bad_index) && continue
+    if iszero(bad_index)
+      push!(cur_cabinet.load_order, cur_file)
+      continue
+    end
 
     cur_info.unloaded_shards = cur_shards[bad_index:end]
 

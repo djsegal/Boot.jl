@@ -3,6 +3,7 @@ __precompile__()
 module Boot
 
   using Compat
+  using StringCases
 
   include("file_util_types.jl")
 
@@ -14,6 +15,7 @@ module Boot
   include("make_initial_load.jl")
   include("attempt_file_load.jl")
 
+  include("print_load_info.jl")
   include("start_load_failure.jl")
   include("load_invalid_file.jl")
 

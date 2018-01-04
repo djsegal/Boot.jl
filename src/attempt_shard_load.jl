@@ -1,6 +1,9 @@
 const allowed_errors = [
+  ErrorException,
   UndefVarError,
-  ArgumentError
+  ArgumentError,
+  MethodError,
+  TypeError
 ]
 
 function attempt_shard_load!(cur_package::Module, cur_info::FileInfo, cur_shard::Expr, is_test::Bool=false)
@@ -12,6 +15,11 @@ function attempt_shard_load!(cur_package::Module, cur_info::FileInfo, cur_shard:
   )
 
   is_include_call && return true
+
+  if cur_shard.head == :export
+    append!(cur_info.parent.export_list, cur_shard.args)
+    return true
+  end
 
   if cur_shard.head == :module
     check_module_node!(cur_package, cur_info, cur_shard) || return false
@@ -25,6 +33,7 @@ function attempt_shard_load!(cur_package::Module, cur_info::FileInfo, cur_shard:
     methods(getfield(cur_package, cur_func_name)) : []
 
   cur_symbol_count = get_method_count(cur_package)
+  cur_docs_count = length(Docs.meta(cur_package))
 
   cur_time = @elapsed(
     try
@@ -35,14 +44,34 @@ function attempt_shard_load!(cur_package::Module, cur_info::FileInfo, cur_shard:
   )
 
   if cur_error == nothing
+    if cur_shard.head == :module
+      cur_package.eval(parse("using $(cur_package).$(cur_shard.args[2])"))
+      check_module_node!(cur_package, cur_info, cur_shard) || return false
+    end
+
     cur_symbol_count -= get_method_count(cur_package)
+    cur_docs_count -= length(Docs.meta(cur_package))
 
     cur_symbol_count *= -1
+    cur_docs_count *= -1
 
-    iszero(cur_symbol_count) && return true
+    no_adds = iszero(cur_symbol_count)
+    no_adds &= iszero(cur_docs_count)
+
+    no_adds && return true
 
     setfield!(cur_shard, :head, :tuple)
     empty!(cur_shard.args)
+
+    new_exports = Symbol[]
+
+    for cur_export in cur_info.parent.export_list
+      isdefined(cur_package, cur_export) || continue
+      cur_package.eval(parse("export $(cur_export)"))
+      push!(new_exports, cur_export)
+    end
+
+    filter!(cur_export -> !in(cur_export, new_exports), cur_info.parent.export_list)
 
     return true
   end
@@ -67,11 +96,11 @@ function attempt_shard_load!(cur_package::Module, cur_info::FileInfo, cur_shard:
 
   cur_info.undef = nothing
 
-  isa(cur_error, ArgumentError) &&
-    ( cur_dict["time"] *= 10 )
-
-  isa(cur_error, UndefVarError) &&
-    ( cur_dict["undef"] = cur_error.var )
+  if isa(cur_error, UndefVarError)
+    cur_info.undef = cur_error.var
+  else
+    cur_info.time *= 10
+  end
 
   return false
 
@@ -86,7 +115,11 @@ function _get_function_name(cur_shard::Expr)
 
   if cur_shard.head == :function
 
-    cur_func_name = cur_shard.args[1].args[1]
+    cur_func_name = cur_shard.args[1]
+
+    isa(cur_func_name, Symbol) && return cur_func_name
+
+    cur_func_name = cur_func_name.args[1]
 
     if isa(cur_func_name, Expr)
 

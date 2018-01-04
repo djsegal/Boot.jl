@@ -39,10 +39,11 @@ if !isdefined(Boot, :themethod)
 end
 
 function delete_method(m::Method)
-    # While methods(getfield(m.module, m.name)) works in many cases, it fails when
-    # a nonex-ported function is extended by a different module.
-    # Invalidate the cache of the callers
-    try
+  # While methods(getfield(m.module, m.name)) works in many cases, it fails when
+  # a nonex-ported function is extended by a different module.
+  # Invalidate the cache of the callers
+
+  try
     invalidate_callers(m.specializations)
     # Remove from method list
     mt = get_methodtable(m.sig)
@@ -52,12 +53,13 @@ function delete_method(m::Method)
     drop_from_tme!(mt, :cache, m)
     # Delete this signature
     deleteat!(ml.ms, findfirst(x->x==m, ml.ms))
-    catch err
-        themethod[] = m
-        showerror(STDERR, err)
-        rethrow(err)
-    end
-nothing
+  catch err
+    themethod[] = m
+    showerror(STDERR, err)
+    rethrow(err)
+  end
+
+  nothing
 end
 
 delete_method(::Void) = nothing
@@ -70,44 +72,43 @@ _get_methodtable(f) = f.name.mt
 invalidate_callers(::Void) = nothing
 
 function invalidate_callers(tml::TypeMapLevel)
-    global themethod
-    println("here")
-    themethod[] = tml
-    nothing
+  global themethod
+  themethod[] = tml
+  nothing
 end
 
 function invalidate_callers(tme::TypeMapEntry)
-    while isa(tme, TypeMapEntry)
-        invalidate_callers(tme.func)
-        tme = tme.next
-    end
-    nothing
+  while isa(tme, TypeMapEntry)
+    invalidate_callers(tme.func)
+    tme = tme.next
+  end
+  nothing
 end
 
 function invalidate_callers(mi::Core.MethodInstance, iddict=ObjectIdDict())
-    iddict[mi] = true
-    if isdefined(mi, :backedges)
-        for c in mi.backedges
-            haskey(iddict, c) && continue
-            invalidate_callers(c, iddict)
-        end
+  iddict[mi] = true
+  if isdefined(mi, :backedges)
+    for c in mi.backedges
+      haskey(iddict, c) && continue
+      invalidate_callers(c, iddict)
     end
-    mtc = get_methodtable(mi.def.sig)
-    drop_from_tme!(mtc, :cache, mi)
-    drop_from_tme!(mi.def, :specializations, mi)
+  end
+  mtc = get_methodtable(mi.def.sig)
+  drop_from_tme!(mtc, :cache, mi)
+  drop_from_tme!(mi.def, :specializations, mi)
 end
 
 function drop_from_tme!(mt::Union{MethodTable,Method}, fn::Symbol, m::Union{Method,Core.MethodInstance})
-    nodeprev, node = nothing, getfield(mt, fn)
-    while isa(node, TypeMapEntry)
-        if node.func === m
-            if nodeprev == nothing
-                setfield!(mt, fn, node.next)
-            else
-                nodeprev.next = node.next
-            end
-        end
-        nodeprev, node = node, node.next
+  nodeprev, node = nothing, getfield(mt, fn)
+  while isa(node, TypeMapEntry)
+    if node.func === m
+      if nodeprev == nothing
+        setfield!(mt, fn, node.next)
+      else
+        nodeprev.next = node.next
+      end
     end
-    mt
+    nodeprev, node = node, node.next
+  end
+  mt
 end
