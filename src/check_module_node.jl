@@ -1,14 +1,21 @@
 function check_module_node!(cur_package::Module, cur_info::FileInfo, cur_shard::Expr)
+  cur_shard = _clean_module_shard!(cur_package, deepcopy(cur_shard))
 
   cur_undef = _check_for_bad_imports(cur_package, cur_info, cur_shard)
+  println(123)
+  println(cur_undef)
 
   if cur_undef == nothing
     cur_undef = _check_for_bad_types(cur_package, cur_info, cur_shard)
   end
+  println(1234)
+  println(cur_undef)
 
   if cur_undef == nothing
     cur_undef = _check_for_bad_methods(cur_package, cur_info, cur_shard)
   end
+  println(1235)
+  println(cur_undef)
 
   if cur_undef == nothing
     has_unloaded_file = false
@@ -50,7 +57,7 @@ function _check_for_bad_methods(cur_package::Module, cur_info::FileInfo, cur_sha
   method_list = filter(
     cur_arg -> isdefined(cur_arg, :head) && (
       cur_arg.head == :function ||
-      ( cur_arg.head == :(=) && cur_arg.args[1].head == :call )
+      ( cur_arg.head == :(=) && isdefined(cur_arg.args[1], :head) && cur_arg.args[1].head == :call )
     ),
     cur_shard.args[3].args
   )
@@ -59,29 +66,101 @@ function _check_for_bad_methods(cur_package::Module, cur_info::FileInfo, cur_sha
 
   isempty(method_list) && return
 
+  base_excused_vars = Symbol[]
+
+  type_list = filter(
+    cur_arg -> isdefined(cur_arg, :head) && ( cur_arg.head == :type || cur_arg.head == :abstract ),
+    cur_shard.args[3].args
+  )
+
+  for cur_type in type_list
+
+    cur_type_symbol = nothing
+
+    ( cur_type.head == :abstract ) &&
+      ( cur_type_symbol = cur_type.args[1] )
+
+    ( cur_type.head == :type ) &&
+      ( cur_type_symbol = cur_type.args[2] )
+
+    ( cur_type_symbol == nothing ) &&
+      error("Unable to determine what to do with cur_type: $cur_type")
+
+    if isa(cur_type_symbol, Expr) && cur_type_symbol.head == :curly
+      println("rookie")
+      main_shard, cur_type_symbol = cur_type_symbol.args
+      push!(base_excused_vars, main_shard)
+    end
+
+    if isa(cur_type_symbol, Expr) && cur_type_symbol.head == :(<:)
+      println("sup")
+      cur_type_symbol = first(cur_type_symbol.args)
+    end
+
+    isa(cur_type_symbol, Symbol) ||
+      error("Unable to determine what to do with cur_type: $cur_type_symbol")
+
+    push!(base_excused_vars, cur_type_symbol)
+  end
+
   for cur_method in method_list
-    ( cur_method.head == :call ) ||
-      error("Unable to determine what to do with non-call function shard")
+    ( cur_method.head == :call || cur_method.head == :where ) ||
+      error("Unable to determine what to do with non-call function shard: $(cur_method.head)")
+
+    cur_excused_vars = deepcopy(base_excused_vars)
+
+    if cur_method.head == :where
+      ( length(cur_method.args) == 2 ) ||
+        error("Currently invalid type shard in module load [3/4]")
+
+      cur_method, cur_type_definition = cur_method.args
+
+      ( cur_type_definition.head == :(<:) ) ||
+        error("Invalid where clause in module load")
+
+      ( length(cur_type_definition.args) == 2 ) ||
+        error("Currently invalid type shard in module load [4/4]")
+
+      cur_param_type, cur_type_association = cur_type_definition.args
+
+      deep_isdefined(cur_package, cur_info, cur_type_association, cur_excused_vars) ||
+        return cur_type_association
+
+      push!(cur_excused_vars, cur_param_type)
+    end
 
     cur_call = first(cur_method.args)
     cur_args = cur_method.args[2:end]
 
-    excused_vars = Symbol[]
-
-    if isa(cur_call, Expr)
+    if isa(cur_call, Expr) && cur_call.head != :(.)
       ( cur_call.head == :curly ) ||
         error("Unable to check type with non-curly head type of: $(cur_call.head) [3/4]")
 
-      append!(excused_vars, cur_call.args[2:end])
+      new_excused_vars = cur_call.args[2:end]
+
+      for (cur_index, cur_sub_shard) in enumerate(new_excused_vars)
+        isa(cur_sub_shard, Expr) || continue
+
+        cur_param_type, cur_type_association = cur_sub_shard.args
+
+        deep_isdefined(cur_package, cur_info, cur_type_association, cur_excused_vars) ||
+          return cur_type_association
+
+        new_excused_vars[cur_index] = cur_param_type
+      end
+
+      append!(cur_excused_vars, new_excused_vars)
     end
 
     for cur_arg in cur_args
       isa(cur_arg, Expr) || continue
       cur_arg.head == :(::) || continue
 
-      cur_type_association = cur_arg.args[2]
+      ( length(cur_arg.args) < 3 ) || error("Invalid :(::) args size in module call")
 
-      deep_isdefined(cur_package, cur_info, cur_type_association, excused_vars) ||
+      cur_type_association = last(cur_arg.args)
+
+      deep_isdefined(cur_package, cur_info, cur_type_association, cur_excused_vars) ||
         return cur_type_association
     end
   end
@@ -89,7 +168,7 @@ function _check_for_bad_methods(cur_package::Module, cur_info::FileInfo, cur_sha
   return
 end
 
-function _check_for_bad_imports(cur_package::Module, cur_info::FileInfo, cur_shard::Expr)
+function _get_import_list(cur_shard::Expr)
   import_list = filter(
     cur_arg -> isdefined(cur_arg, :head) && ( cur_arg.head == :import || cur_arg.head == :using ),
     cur_shard.args[3].args
@@ -107,6 +186,12 @@ function _check_for_bad_imports(cur_package::Module, cur_info::FileInfo, cur_sha
     end
   end
 
+  import_list
+end
+
+function _check_for_bad_imports(cur_package::Module, cur_info::FileInfo, cur_shard::Expr)
+  import_list = _get_import_list(cur_shard)
+
   for cur_import in import_list
 
     dot_count = 0
@@ -123,23 +208,13 @@ function _check_for_bad_imports(cur_package::Module, cur_info::FileInfo, cur_sha
       cur_import.args[1] = Symbol(cur_package)
     end
 
-    # if cur_import.args[1] != Symbol(cur_package)
-    #   println("scumbag")
-    #   println(Symbol(cur_info.parent.boot_module))
-    #   println(cur_import.args[1])
-    #   println(404)
-    #   cur_boot_module = getfield(cur_package, Symbol(cur_info.parent.boot_module))
-    #   try
-    #     cur_boot_module.eval(cur_import)
-    #   catch
-    #     Base.invokelatest(
-    #       cur_boot_module.eval,
-    #       cur_import
-    #     )
-    #   end
+    if cur_import.args[1] != Symbol(cur_package)
+      isdefined(cur_package, last(cur_import.args)) && continue
 
-    #   continue
-    # end
+      cur_info.parent.boot_module.include_string(string(cur_import))
+
+      continue
+    end
 
     work_method = cur_import.args[end]
 
@@ -178,46 +253,76 @@ end
 
 function _check_for_bad_types(cur_package::Module, cur_info::FileInfo, cur_shard::Expr)
   type_list = filter(
-    cur_arg -> isdefined(cur_arg, :head) && cur_arg.head == :type,
+    cur_arg -> isdefined(cur_arg, :head) && ( cur_arg.head == :type || cur_arg.head == :abstract ),
     cur_shard.args[3].args
   )
 
-  excused_vars = Array{Symbol}(0)
+  excused_vars = Symbol[]
 
   for cur_type in type_list
+    println("asdf ", cur_type)
+    cur_type_definition = nothing
+
+    if cur_type.head == :abstract
+      cur_type_definition = cur_type.args[1]
+      push!(excused_vars, cur_type_definition)
+      continue
+    end
+
     cur_type_definition = cur_type.args[2]
+
+    if isa(cur_type_definition, Symbol)
+      push!(excused_vars, cur_type_definition)
+    end
 
     if isa(cur_type_definition, Expr)
       if cur_type_definition.head == :(<:)
         ( length(cur_type_definition.args) == 2 ) ||
-          error("Currently invalid type shard in module load [1/2]")
+          error("Currently invalid type shard in module load [1/4]")
 
-        cur_type_association = cur_type_definition.args[2]
+        cur_param_type, cur_type_association = cur_type_definition.args
 
-        deep_isdefined(cur_package, cur_info, cur_type_association) ||
-          return cur_type_association
-      else
+        if isa(cur_param_type, Symbol)
+          push!(excused_vars, cur_param_type)
+        elseif cur_param_type.head == :curly
+          cur_type_definition = cur_param_type
+        else
+          error("Unable to determine what to do with param type of: $(cur_param_type.head)")
+        end
+
+        deep_isdefined(cur_package, cur_info, cur_type_association, excused_vars) ||
+          ( println("axd") ; return cur_type_association )
+      end
+
+      if cur_type_definition.head != :(<:)
         ( cur_type_definition.head == :curly ) ||
           error("Unable to check type with non-curly head type of: $(cur_type_definition.head) [2/4]")
 
         for cur_sub_shard in cur_type_definition.args[2:end]
+          if isa(cur_sub_shard, Symbol)
+            push!(excused_vars, cur_sub_shard)
+            continue
+          end
+
           ( cur_sub_shard.head == :(<:) ) ||
             error("Unable to check type with a sub-head type of: $(cur_type_definition.head)")
 
           ( length(cur_sub_shard.args) == 2 ) ||
-            error("Currently invalid type shard in module load [2/2]")
+            error("Currently invalid type shard in module load [2/4]")
 
           cur_param_type, cur_type_association = cur_sub_shard.args
 
           push!(excused_vars, cur_param_type)
 
-          deep_isdefined(cur_package, cur_info, cur_type_association) ||
-            return cur_type_association
+          deep_isdefined(cur_package, cur_info, cur_type_association, excused_vars) ||
+            ( println("nimubs") ; return cur_type_association )
         end
       end
     end
 
     for cur_field in cur_type.args[3].args
+      isa(cur_field, Symbol) && continue
+
       ( cur_field.head == :function ) && continue
       ( cur_field.head == :line ) && continue
       ( cur_field.head == :(=) ) && continue
@@ -252,7 +357,7 @@ end
 function _check_type_field(cur_package::Module, cur_info::FileInfo, cur_shard::Symbol, excused_vars::Array{Symbol})
   in(cur_shard, excused_vars) && return
 
-  deep_isdefined(cur_package, cur_info, cur_shard) && return
+  deep_isdefined(cur_package, cur_info, cur_shard, excused_vars) && return
 
   cur_shard
 end
@@ -273,9 +378,34 @@ function _check_dot_field(cur_package::Module, cur_info::FileInfo, cur_shard::Ex
   return cur_error.var
 end
 
-function deep_isdefined(cur_package::Module, cur_info::FileInfo, cur_shard::Expr, excused_vars::Vector{Symbol}=Symbol[])
+function deep_isdefined(cur_package::Module, cur_info::FileInfo, cur_shard::Expr, excused_vars::Vector{Symbol})
+  if cur_shard.head == :(.)
+    cur_dot_reference = _expand_dot_var(cur_package, cur_shard)
+
+    tmp_packages = [ cur_package , cur_info.parent.boot_module ]
+
+    cur_field = nothing
+
+    first_reference = first(cur_dot_reference)
+
+    for tmp_package in tmp_packages
+      isdefined(tmp_package, first_reference) || continue
+      cur_field = getfield(tmp_package, first_reference)
+      break
+    end
+
+    ( cur_field == nothing ) && return false
+
+    for cur_reference in cur_dot_reference[2:end]
+      isdefined(cur_field, cur_reference) || return false
+      cur_field = getfield(cur_field, cur_reference)
+    end
+
+    return true
+  end
+
   ( cur_shard.head == :curly ) ||
-    error("Unable to check type with non-curly head type of: $(cur_type_definition.head) [1/4]")
+    error("Unable to check type with non-curly head type of: $(cur_shard.head) [1/4]")
 
   for cur_sub_shard in cur_shard.args
     isa(cur_sub_shard, Symbol) || continue
@@ -287,7 +417,7 @@ function deep_isdefined(cur_package::Module, cur_info::FileInfo, cur_shard::Expr
   return true
 end
 
-function deep_isdefined(cur_package::Module, cur_info::FileInfo, cur_shard::Symbol, excused_vars::Vector{Symbol}=Symbol[])
+function deep_isdefined(cur_package::Module, cur_info::FileInfo, cur_shard::Symbol, excused_vars::Vector{Symbol})
   tmp_packages = [ cur_package , cur_info.parent.boot_module ]
 
   in(cur_shard, excused_vars) && return true
@@ -297,4 +427,50 @@ function deep_isdefined(cur_package::Module, cur_info::FileInfo, cur_shard::Symb
   end
 
   return false
+end
+
+_clean_module_shard!(cur_package::Module, cur_shard::Any) = cur_shard
+
+function _clean_module_shard!(cur_package::Module, cur_shard::Expr)
+  if cur_shard.head == :macrocall && string(cur_shard.args[1]) == "Core.@doc"
+    cur_shard = cur_shard.args[3]
+    isa(cur_shard, Symbol) && return cur_shard
+  end
+
+  expanded_shard = cur_package.macroexpand(cur_shard)
+
+  if expanded_shard.head != :error
+    cur_shard = expanded_shard
+  end
+
+  for (cur_index, cur_sub_shard) in enumerate(cur_shard.args)
+    cur_shard.args[cur_index] = _clean_module_shard!(cur_package, cur_sub_shard)
+  end
+
+  cur_shard
+end
+
+function _expand_dot_var(cur_package::Module, cur_shard::Expr, cur_list::Vector{Symbol}=Symbol[])
+  ( length(cur_shard.args) == 2 ) ||
+    error("Currently invalid dot shard in module load")
+
+  first_shard, second_shard = cur_shard.args
+
+  if isa(first_shard, Symbol)
+    push!(cur_list, first_shard)
+  elseif isa(first_shard, Expr)
+    _expand_dot_var(cur_package, first_shard, cur_list)
+  else
+    error("Unable to determine what to do with dot shard: $cur_shard [1/2]")
+  end
+
+  if isa(second_shard, Symbol)
+    push!(cur_list, second_shard)
+  elseif isa(second_shard, QuoteNode)
+    push!(cur_list, cur_package.eval(second_shard))
+  else
+    error("Unable to determine what to do with dot shard: $cur_shard [2/2]")
+  end
+
+  cur_list
 end

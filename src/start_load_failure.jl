@@ -14,8 +14,24 @@ function start_load_failure!(cur_package::Module, cur_cabinet::FileCabinet; verb
 
   end
 
-  first_bad_file = first(cur_cabinet.file_infos)
+  cur_error = nothing
 
-  load_invalid_file(cur_package, first_bad_file)
+  for (cur_index, cur_info) in enumerate(cur_cabinet.file_infos)
+
+    try
+      load_invalid_file(cur_package, cur_info)
+    catch tmp_error
+      cur_error = tmp_error
+
+      verbose || break
+      ( cur_index == length(cur_cabinet.file_infos) ) && break
+
+      showerror(STDERR, tmp_error)
+      println("\n-----")
+    end
+
+  end
+
+  rethrow(cur_error)
 
 end

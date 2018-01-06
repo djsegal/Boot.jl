@@ -46,7 +46,6 @@ function attempt_shard_load!(cur_package::Module, cur_info::FileInfo, cur_shard:
   if cur_error == nothing
     if cur_shard.head == :module
       cur_package.eval(parse("using $(cur_package).$(cur_shard.args[2])"))
-      check_module_node!(cur_package, cur_info, cur_shard) || return false
     end
 
     cur_symbol_count -= get_method_count(cur_package)
@@ -111,6 +110,7 @@ function _get_function_name(cur_shard::Expr)
 
   if cur_shard.head == :macrocall && string(cur_shard.args[1]) == "Core.@doc"
     cur_shard = cur_shard.args[3]
+    isa(cur_shard, Symbol) && return
   end
 
   if cur_shard.head == :function
